@@ -8,6 +8,9 @@ Cordova plugin that allows camera interaction from Javascript and HTML
 
 **PR's are greatly appreciated.**
 
+# Change for this fork
+- Android: make the preview activity full screen (the bottom action bar is hidden)
+
 # Features
 
 <ul>

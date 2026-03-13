@@ -119,6 +119,15 @@ public class CameraActivity extends Fragment {
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     appResourcesPackage = getActivity().getPackageName();
 
+    final View decorView = getActivity().getWindow().getDecorView();
+    decorView.setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
     // Inflate the layout for this fragment
     view = inflater.inflate(getResources().getIdentifier("camera_activity", "layout", appResourcesPackage), container, false);
     createCameraPreview();
@@ -281,9 +290,31 @@ public class CameraActivity extends Fragment {
     }
   }
 
+  private void makeActivityFullScreen() {
+    final View decorView = getActivity().getWindow().getDecorView();
+    decorView.setSystemUiVisibility(
+      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        | View.SYSTEM_UI_FLAG_FULLSCREEN
+        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+  }
+
   @Override
   public void onResume() {
     super.onResume();
+
+    this.makeActivityFullScreen();
+
+    final View decorView = getActivity().getWindow().getDecorView();
+    decorView.setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
     try {
       mCamera = Camera.open(defaultCameraId);
@@ -709,7 +740,7 @@ public class CameraActivity extends Fragment {
       }
 
       canTakePicture = false;
-      
+
       Activity activity = getActivity();
       if (activity == null) {
         canTakePicture = true;
@@ -747,7 +778,7 @@ public class CameraActivity extends Fragment {
 
             // Check if parameters actually changed before calling setParameters
             Camera.Parameters currentParams = mCamera.getParameters();
-            boolean paramsChanged = 
+            boolean paramsChanged =
               currentParams.getJpegQuality() != params.getJpegQuality() ||
               currentParams.getPictureSize().width != params.getPictureSize().width ||
               currentParams.getPictureSize().height != params.getPictureSize().height;

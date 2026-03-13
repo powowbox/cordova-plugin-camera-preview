@@ -114,24 +114,22 @@ public class CameraActivity extends Fragment {
   }
 
   private String appResourcesPackage;
+  private int savedVisibilityState = -1;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     appResourcesPackage = getActivity().getPackageName();
 
-    final View decorView = getActivity().getWindow().getDecorView();
-    decorView.setSystemUiVisibility(
-        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
     // Inflate the layout for this fragment
     view = inflater.inflate(getResources().getIdentifier("camera_activity", "layout", appResourcesPackage), container, false);
     createCameraPreview();
     return view;
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    this.restoreSytemUiVisibility();
   }
 
   public void setRect(int x, int y, int width, int height){
@@ -292,6 +290,10 @@ public class CameraActivity extends Fragment {
 
   private void makeActivityFullScreen() {
     final View decorView = getActivity().getWindow().getDecorView();
+    if ( this.savedVisibilityState == -1 ) {
+      this.savedVisibilityState = decorView.getSystemUiVisibility();
+    }
+
     decorView.setSystemUiVisibility(
       View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -299,6 +301,12 @@ public class CameraActivity extends Fragment {
         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         | View.SYSTEM_UI_FLAG_FULLSCREEN
         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+  }
+
+  private void restoreSytemUiVisibility() {
+    final View decorView = getActivity().getWindow().getDecorView();
+    decorView.setSystemUiVisibility(this.savedVisibilityState);
+    this.savedVisibilityState = -1;
   }
 
   @Override

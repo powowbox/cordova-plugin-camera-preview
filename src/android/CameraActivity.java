@@ -276,19 +276,16 @@ public class CameraActivity extends Fragment {
     }
   }
 
-  private void makeActivityFullScreen() {
+  private void hideBottomNavigationBar() {
     final View decorView = getActivity().getWindow().getDecorView();
     if ( this.savedVisibilityState == -1 ) {
       this.savedVisibilityState = decorView.getSystemUiVisibility();
     }
 
     decorView.setSystemUiVisibility(
-      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+          View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-        | View.SYSTEM_UI_FLAG_FULLSCREEN
-        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
   }
 
   private void restoreSytemUiVisibility() {
@@ -301,7 +298,7 @@ public class CameraActivity extends Fragment {
   public void onResume() {
     super.onResume();
 
-    this.makeActivityFullScreen();
+    this.hideBottomNavigationBar();
 
     final View decorView = getActivity().getWindow().getDecorView();
     decorView.setSystemUiVisibility(

@@ -53,8 +53,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   private static final String PREVIEW_SIZE_ACTION = "setPreviewSize";
   private static final String SWITCH_CAMERA_ACTION = "switchCamera";
   private static final String TAKE_PICTURE_ACTION = "takePicture";
-  private static final String START_RECORD_VIDEO_ACTION = "startRecordVideo";
-  private static final String STOP_RECORD_VIDEO_ACTION = "stopRecordVideo";
   private static final String TAKE_SNAPSHOT_ACTION = "takeSnapshot";
   private static final String SHOW_CAMERA_ACTION = "showCamera";
   private static final String HIDE_CAMERA_ACTION = "hideCamera";
@@ -87,8 +85,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   private CameraActivity fragment;
   private CallbackContext takePictureCallbackContext;
   private CallbackContext takeSnapshotCallbackContext;
-  private CallbackContext startRecordVideoCallbackContext;
-  private CallbackContext stopRecordVideoCallbackContext;
   private CallbackContext setFocusCallbackContext;
   private CallbackContext startCameraCallbackContext;
   private CallbackContext tapBackButtonContext  = null;
@@ -120,19 +116,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
       return takePicture(args.getInt(0), args.getInt(1), args.getInt(2), callbackContext);
     } else if (TAKE_SNAPSHOT_ACTION.equals(action)) {
       return takeSnapshot(args.getInt(0), callbackContext);
-    }else if (START_RECORD_VIDEO_ACTION.equals(action)) {
-      String[] videoPermissions = getVideoPermissions();
-
-      if (cordova.hasPermission(videoPermissions[0]) && cordova.hasPermission(videoPermissions[1]) && cordova.hasPermission(videoPermissions[2]) && cordova.hasPermission(videoPermissions[3])) {
-        return startRecordVideo(args.getString(0), args.getInt(1), args.getInt(2), args.getInt(3), args.getBoolean(4), callbackContext);
-      } else {
-        this.execCallback = callbackContext;
-        this.execArgs = args;
-        cordova.requestPermissions(this, VID_REQ_CODE, videoPermissions);
-        return true;
-      }
-    } else if (STOP_RECORD_VIDEO_ACTION.equals(action)) {
-      return stopRecordVideo(callbackContext);
     } else if (COLOR_EFFECT_ACTION.equals(action)) {
       return setColorEffect(args.getString(0), callbackContext);
     } else if (ZOOM_ACTION.equals(action)) {
@@ -209,8 +192,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
     if(requestCode == CAM_REQ_CODE){
       startCamera(this.execArgs.getInt(0), this.execArgs.getInt(1), this.execArgs.getInt(2), this.execArgs.getInt(3), this.execArgs.getString(4), this.execArgs.getBoolean(5), this.execArgs.getBoolean(6), this.execArgs.getBoolean(7), this.execArgs.getString(8), this.execArgs.getBoolean(9), this.execArgs.getBoolean(10), this.execArgs.getBoolean(11), this.execCallback);
-    }else if(requestCode == VID_REQ_CODE){
-      startRecordVideo(this.execArgs.getString(0), this.execArgs.getInt(1), this.execArgs.getInt(2), this.execArgs.getInt(3), this.execArgs.getBoolean(4),  this.execCallback);
     }
   }
 
@@ -354,7 +335,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
           // add the fragment to the container
           FragmentManager fragmentManager = cordova.getActivity().getFragmentManager();
           FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-          
+
           // Check if fragment is null
           if (fragment != null) {
             fragmentTransaction.add(containerView.getId(), fragment);
@@ -441,70 +422,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   public void onPictureTakenError(String message) {
     Log.d(TAG, "CameraPreview onPictureTakenError");
     takePictureCallbackContext.error(message);
-  }
-
-  private boolean startRecordVideo(final String camera, final int width, final int height, final int quality, final boolean withFlash, CallbackContext callbackContext) {
-    if(this.hasView(callbackContext) == false){
-      return true;
-    }
-    final String filename = "videoTmp";
-    VIDEO_FILE_PATH = cordova.getActivity().getCacheDir().toString() + "/";
-    startRecordVideoCallbackContext = callbackContext;
-     cordova.getThreadPool().execute(new Runnable() {
-      @Override
-      public void run() {
-        fragment.startRecord(getFilePath(filename), camera, width, height, quality, withFlash);
-      }
-    });
-
-    return true;
-  }
-
-  public void onStartRecordVideo() {
-    Log.d(TAG, "onStartRecordVideo started");
-
-    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
-    pluginResult.setKeepCallback(true);
-
-    startRecordVideoCallbackContext.sendPluginResult(pluginResult);
-  }
-
-  public void onStartRecordVideoError(String message) {
-    Log.d(TAG, "CameraPreview onStartRecordVideo");
-
-    startRecordVideoCallbackContext.error(message);
-  }
-
-  private boolean stopRecordVideo(CallbackContext callbackContext) {
-    if(this.hasView(callbackContext) == false){
-      return true;
-    }
-
-    stopRecordVideoCallbackContext = callbackContext;
-
-    cordova.getThreadPool().execute(new Runnable() {
-      @Override
-      public void run() {
-        fragment.stopRecord();
-      }
-    });
-
-    return true;
-  }
-
-  public void onStopRecordVideo(String file) {
-    Log.d(TAG, "onStopRecordVideo success");
-
-    PluginResult result = new PluginResult(PluginResult.Status.OK, file);
-    result.setKeepCallback(true);
-
-    stopRecordVideoCallbackContext.sendPluginResult(result);
-  }
-
-  public void onStopRecordVideoError(String err) {
-    Log.d(TAG, "onStopRecordVideo error");
-
-    stopRecordVideoCallbackContext.error(err);
   }
 
   private String getFilePath(String filename) {

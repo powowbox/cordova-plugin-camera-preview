@@ -87,12 +87,6 @@ public class CameraActivity extends Fragment {
   public int x;
   public int y;
 
-  private enum RecordingState {INITIALIZING, STARTED, STOPPED}
-
-  private RecordingState mRecordingState = RecordingState.INITIALIZING;
-  private MediaRecorder mRecorder = null;
-  private String recordFilePath;
-
   public void setEventListener(CameraPreviewListener listener){
     eventListener = listener;
   }
@@ -444,10 +438,6 @@ public class CameraActivity extends Fragment {
     if (mCamera != null && cameraParameters != null) {
       mCamera.setParameters(cameraParameters);
     }
-  }
-
-  public boolean hasFrontCamera(){
-    return getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
   }
 
   public static Bitmap applyMatrix(Bitmap source, Matrix matrix) {
@@ -844,22 +834,5 @@ public class CameraActivity extends Fragment {
       Math.round((x + 100) * 2000 / width  - 1000),
       Math.round((y + 100) * 2000 / height - 1000)
     );
-  }
-
-  static Camera.Size getBestResolution(Camera.Parameters cp) {
-    List<Camera.Size> sl = cp.getSupportedVideoSizes();
-
-    if (sl == null)
-      sl = cp.getSupportedPictureSizes();
-
-    Camera.Size large = sl.get(0);
-
-    for (Camera.Size s : sl) {
-      if ((large.height * large.width) < (s.height * s.width)) {
-        large = s;
-      }
-    }
-
-    return large;
   }
 }

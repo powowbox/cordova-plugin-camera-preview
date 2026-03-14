@@ -29,8 +29,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
   int cameraId;
   int displayOrientation;
   int facing = Camera.CameraInfo.CAMERA_FACING_BACK;
-  int viewWidth;
-  int viewHeight;
 
   Preview(Context context) {
     super(context);
@@ -76,16 +74,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
     return facing;
   }
 
-  public void printPreviewSize(String from) {
-    Log.d(TAG, "printPreviewSize from " + from + ": > width: " + mPreviewSize.width + " height: " + mPreviewSize.height);
-  }
-  public void setCameraPreviewSize() {
-    if (mCamera != null) {
-      Camera.Parameters parameters = mCamera.getParameters();
-      parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-      mCamera.setParameters(parameters);
-    }
-  }
   private void setCameraDisplayOrientation() {
     Camera.CameraInfo info = new Camera.CameraInfo();
     int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
@@ -303,12 +291,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       } catch (Exception exception) {
         Log.e(TAG, "Exception caused by surfaceChanged()", exception);
       }
-    }
-  }
-
-  public void setOneShotPreviewCallback(Camera.PreviewCallback callback) {
-    if(mCamera != null) {
-      mCamera.setOneShotPreviewCallback(callback);
     }
   }
 }

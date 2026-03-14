@@ -74,10 +74,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   private static final String GET_CAMERA_CHARACTERISTICS_ACTION = "getCameraCharacteristics";
 
   private static final int CAM_REQ_CODE = 0;
-  private static final int VID_REQ_CODE = 1;
-  private String VIDEO_FILE_PATH = "";
-  private static final String VIDEO_FILE_EXTENSION = ".mp4";
-
   private static final String [] permissions = {
     Manifest.permission.CAMERA
   };
@@ -422,20 +418,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   public void onPictureTakenError(String message) {
     Log.d(TAG, "CameraPreview onPictureTakenError");
     takePictureCallbackContext.error(message);
-  }
-
-  private String getFilePath(String filename) {
-    String fileName = filename;
-
-    int i = 1;
-
-    while (new File(VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION).exists()) {
-      // Add number suffix if file exists
-      fileName = filename + '_' + i;
-      i++;
-    }
-
-    return VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION;
   }
 
   private boolean setColorEffect(String effect, CallbackContext callbackContext) {
@@ -1110,21 +1092,4 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
     return true;
   }
 
-  private String[] getVideoPermissions() {
-    ArrayList<String> permissions = new ArrayList<>();
-
-    permissions.add(Manifest.permission.CAMERA);
-    permissions.add(Manifest.permission.RECORD_AUDIO);
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
-      permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
-    } else {
-      // Android API 32 or lower
-      permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-      permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    }
-
-    return permissions.toArray(new String[0]);
-  }
 }

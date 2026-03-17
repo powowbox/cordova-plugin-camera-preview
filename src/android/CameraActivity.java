@@ -540,7 +540,7 @@ public class CameraActivity extends Fragment {
     }
   };
 
-  private Camera.Size getOptimalPictureSize(final int width, final int height, final Camera.Size previewSize, final List<Camera.Size> supportedSizes){
+  private Camera.Size getOptimalPictureSize(final int width, final int height, final List<Camera.Size> supportedSizes){
     /*
       get the supportedPictureSize that:
       - matches exactly width and height
@@ -559,7 +559,7 @@ public class CameraActivity extends Fragment {
 
     Camera.Size requestedSize = mCamera.new Size(size.width, size.height);
 
-    double previewAspectRatio  = (double)previewSize.width / (double)previewSize.height;
+    double previewAspectRatio  = (double)width / (double)height;
 
     if (previewAspectRatio < 1.0) {
       // reset ratio to landscape
@@ -689,7 +689,7 @@ public class CameraActivity extends Fragment {
     if (mCamera == null || mPreview == null) return;
     try {
       Camera.Parameters params = mCamera.getParameters();
-      Camera.Size size = getOptimalPictureSize(0, 0, params.getPreviewSize(), params.getSupportedPictureSizes());
+      Camera.Size size = getOptimalPictureSize(0, 0, params.getSupportedPictureSizes());
       params.setPictureSize(size.width, size.height);
       params.setJpegQuality(85);
       params.setRotation(mPreview.getDisplayOrientation());
@@ -731,7 +731,7 @@ public class CameraActivity extends Fragment {
             // Only update picture size if a specific size was requested
             if (width > 0 && height > 0) {
               Camera.Size currentSize = params.getPictureSize();
-              Camera.Size optimalSize = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
+              Camera.Size optimalSize = getOptimalPictureSize(width, height, params.getSupportedPictureSizes());
               if (currentSize.width != optimalSize.width || currentSize.height != optimalSize.height) {
                 params.setPictureSize(optimalSize.width, optimalSize.height);
               }

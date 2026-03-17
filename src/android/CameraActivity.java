@@ -100,7 +100,7 @@ public class CameraActivity extends Fragment {
   @Override
   public void onDestroy() {
     super.onDestroy();
-    this.restoreSytemUiVisibility();
+    this.restoreSystemUiVisibility();
   }
 
   public void setRect(int x, int y, int width, int height){
@@ -271,7 +271,7 @@ public class CameraActivity extends Fragment {
         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
   }
 
-  private void restoreSytemUiVisibility() {
+  private void restoreSystemUiVisibility() {
     final View decorView = getActivity().getWindow().getDecorView();
     decorView.setSystemUiVisibility(this.savedVisibilityState);
     this.savedVisibilityState = -1;

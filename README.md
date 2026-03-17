@@ -10,6 +10,8 @@ Cordova plugin that allows camera interaction from Javascript and HTML
 
 # Change for this fork
 - Android: make the preview activity full screen (the bottom action bar is hidden)
+- In the getOptimalPictureSize, don't use the preview size, but the requested dimensions.
+  - on S21 FE or Pixel6a, using getPreviewSize implies width=height.
 
 # Features
 

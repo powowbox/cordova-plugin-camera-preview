@@ -390,7 +390,7 @@
 
   [self.device setVideoZoomFactor:self.videoZoomFactor];
   [self.device unlockForConfiguration];
-  NSLog(@"%zd zoom factor set", self.videoZoomFactor);
+  NSLog(@"%f zoom factor set", (double)self.videoZoomFactor);
 }
 
 - (CGFloat)getZoom {
@@ -514,7 +514,7 @@
 - (CGFloat)getExposureCompensation {
 
   AVCaptureDevice * videoDevice = [self cameraWithPosition: self.defaultCamera];
-  NSLog(@"getExposureCompensation: %zd", videoDevice.exposureTargetBias);
+  NSLog(@"getExposureCompensation: %f", (double)videoDevice.exposureTargetBias);
   return videoDevice.exposureTargetBias;
 }
 

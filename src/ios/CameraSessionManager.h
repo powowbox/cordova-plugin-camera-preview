@@ -37,7 +37,10 @@
 - (void) takePictureOnFocus;
 - (BOOL) isTorchActive;
 - (void) setTorchMode;
+- (AVCaptureVideoOrientation) getCurrentOrientation;
 - (AVCaptureVideoOrientation) getCurrentOrientation:(UIInterfaceOrientation)toInterfaceOrientation;
+
+@property (nonatomic, weak) UIViewController *viewController;
 
 @property (atomic) CIFilter *ciFilter;
 @property (nonatomic) NSLock *filterLock;

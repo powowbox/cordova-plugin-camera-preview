@@ -67,7 +67,25 @@
 }
 
 - (AVCaptureVideoOrientation) getCurrentOrientation {
-  return [self getCurrentOrientation: [[UIApplication sharedApplication] statusBarOrientation]];
+  __block UIInterfaceOrientation orientation = UIInterfaceOrientationPortrait;
+  void (^readOrientation)(void) = ^{
+    if (@available(iOS 13.0, *)) {
+      UIWindowScene *scene = self.viewController.view.window.windowScene;
+      if (scene != nil && scene.interfaceOrientation != UIInterfaceOrientationUnknown) {
+        orientation = scene.interfaceOrientation;
+      }
+    } else {
+      orientation = self.viewController.interfaceOrientation;
+    }
+  };
+
+  // Focus callbacks may run off the main thread; UIKit must be read on it.
+  if ([NSThread isMainThread]) {
+    readOrientation();
+  } else {
+    dispatch_sync(dispatch_get_main_queue(), readOrientation);
+  }
+  return [self getCurrentOrientation:orientation];
 }
 
 - (AVCaptureVideoOrientation) getCurrentOrientation:(UIInterfaceOrientation)toInterfaceOrientation {
@@ -92,6 +110,7 @@
 - (void) setupSession:(NSString *)defaultCamera completion:(void(^)(BOOL started))completion{
   // If this fails, video input will just stream blank frames and the user will be notified. User only has to accept once.
   [self checkDeviceAuthorizationStatus];
+  const AVCaptureVideoOrientation orientation = [self getCurrentOrientation];
 
   dispatch_async(self.sessionQueue, ^{
       NSError *error = nil;
@@ -146,7 +165,7 @@
         [self.session addOutput:dataOutput];
       }
 
-      [self updateOrientation:[self getCurrentOrientation]];
+      [self updateOrientation:orientation];
       self.device = videoDevice;
 
       completion(success);
@@ -176,6 +195,7 @@
     self.defaultCamera = AVCaptureDevicePositionFront;
   }
 
+  const AVCaptureVideoOrientation orientation = [self getCurrentOrientation];
   dispatch_async([self sessionQueue], ^{
       NSError *error = nil;
       BOOL success = TRUE;
@@ -213,7 +233,7 @@
         [self setVideoDeviceInput:videoDeviceInput];
       }
 
-      [self updateOrientation:[self getCurrentOrientation]];
+      [self updateOrientation:orientation];
       [self.session commitConfiguration];
       self.device = videoDevice;
 

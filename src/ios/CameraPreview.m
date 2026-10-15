@@ -40,6 +40,7 @@
 
     // Create the session manager
     self.sessionManager = [[CameraSessionManager alloc] init];
+    self.sessionManager.viewController = self.viewController;
 
     // render controller setup
     self.cameraRenderController = [[CameraRenderController alloc] init];
@@ -615,63 +616,22 @@
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
-- (double)radiansFromUIImageOrientation:(UIImageOrientation)orientation {
-  double radians;
-
-  switch ([[UIApplication sharedApplication] statusBarOrientation]) {
-    case UIDeviceOrientationPortrait:
-      radians = M_PI_2;
-      break;
-    case UIDeviceOrientationLandscapeLeft:
-      radians = 0.f;
-      break;
-    case UIDeviceOrientationLandscapeRight:
-      radians = M_PI;
-      break;
-    case UIDeviceOrientationPortraitUpsideDown:
-      radians = -M_PI_2;
-      break;
+// Convert the capture's EXIF orientation into pixels before processing the image.
+- (CIImage *)orientedImageFromImage:(UIImage *)image {
+  int exifOrientation = 1;
+  switch (image.imageOrientation) {
+    case UIImageOrientationUp: exifOrientation = 1; break;
+    case UIImageOrientationUpMirrored: exifOrientation = 2; break;
+    case UIImageOrientationDown: exifOrientation = 3; break;
+    case UIImageOrientationDownMirrored: exifOrientation = 4; break;
+    case UIImageOrientationLeftMirrored: exifOrientation = 5; break;
+    case UIImageOrientationRight: exifOrientation = 6; break;
+    case UIImageOrientationRightMirrored: exifOrientation = 7; break;
+    case UIImageOrientationLeft: exifOrientation = 8; break;
   }
 
-  return radians;
-}
-
--(CGImageRef) CGImageRotated:(CGImageRef) originalCGImage withRadians:(double) radians {
-  CGSize imageSize = CGSizeMake(CGImageGetWidth(originalCGImage), CGImageGetHeight(originalCGImage));
-  CGSize rotatedSize;
-  if (radians == M_PI_2 || radians == -M_PI_2) {
-    rotatedSize = CGSizeMake(imageSize.height, imageSize.width);
-  } else {
-    rotatedSize = imageSize;
-  }
-
-  double rotatedCenterX = rotatedSize.width / 2.f;
-  double rotatedCenterY = rotatedSize.height / 2.f;
-
-  UIGraphicsBeginImageContextWithOptions(rotatedSize, NO, 1.f);
-  CGContextRef rotatedContext = UIGraphicsGetCurrentContext();
-  if (radians == 0.f || radians == M_PI) { // 0 or 180 degrees
-    CGContextTranslateCTM(rotatedContext, rotatedCenterX, rotatedCenterY);
-    if (radians == 0.0f) {
-      CGContextScaleCTM(rotatedContext, 1.f, -1.f);
-    } else {
-      CGContextScaleCTM(rotatedContext, -1.f, 1.f);
-    }
-    CGContextTranslateCTM(rotatedContext, -rotatedCenterX, -rotatedCenterY);
-  } else if (radians == M_PI_2 || radians == -M_PI_2) { // +/- 90 degrees
-    CGContextTranslateCTM(rotatedContext, rotatedCenterX, rotatedCenterY);
-    CGContextRotateCTM(rotatedContext, radians);
-    CGContextScaleCTM(rotatedContext, 1.f, -1.f);
-    CGContextTranslateCTM(rotatedContext, -rotatedCenterY, -rotatedCenterX);
-  }
-
-  CGRect drawingRect = CGRectMake(0.f, 0.f, imageSize.width, imageSize.height);
-  CGContextDrawImage(rotatedContext, drawingRect, originalCGImage);
-  CGImageRef rotatedCGImage = CGBitmapContextCreateImage(rotatedContext);
-
-  UIGraphicsEndImageContext();
-
-  return rotatedCGImage;
+  CIImage *capturedImage = [[CIImage alloc] initWithCGImage:image.CGImage];
+  return [capturedImage imageByApplyingOrientation:exifOrientation];
 }
 
 - (void) invokeTapToFocus:(CGPoint)point {
@@ -688,6 +648,7 @@
 }
 
 - (void) invokeTakePicture:(CGFloat) width withHeight:(CGFloat) height withQuality:(CGFloat) quality{
+    [self.sessionManager updateOrientation:[self.sessionManager getCurrentOrientation]];
     AVCaptureConnection *connection = [self.sessionManager.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
     [self.sessionManager.stillImageOutput captureStillImageAsynchronouslyFromConnection:connection completionHandler:^(CMSampleBufferRef sampleBuffer, NSError *error) {
 
@@ -700,29 +661,27 @@
         NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:sampleBuffer];
         UIImage *capturedImage  = [[UIImage alloc] initWithData:imageData];
 
-        CIImage *capturedCImage;
-        //image resize
+        CIImage *capturedCImage = [self orientedImageFromImage:capturedImage];
+        // Resize in the final, oriented coordinate system.
 
         if(width > 0 && height > 0){
-          CGFloat scaleHeight = width/capturedImage.size.height;
-          CGFloat scaleWidth = height/capturedImage.size.width;
-          CGFloat scale = scaleHeight > scaleWidth ? scaleWidth : scaleHeight;
+          CGFloat widthScale = width/capturedCImage.extent.size.width;
+          CGFloat heightScale = height/capturedCImage.extent.size.height;
+          CGFloat scale = MIN(widthScale, heightScale);
 
           CIFilter *resizeFilter = [CIFilter filterWithName:@"CILanczosScaleTransform"];
-          [resizeFilter setValue:[[CIImage alloc] initWithCGImage:[capturedImage CGImage]] forKey:kCIInputImageKey];
+          [resizeFilter setValue:capturedCImage forKey:kCIInputImageKey];
           [resizeFilter setValue:[NSNumber numberWithFloat:1.0f] forKey:@"inputAspectRatio"];
           [resizeFilter setValue:[NSNumber numberWithFloat:scale] forKey:@"inputScale"];
           capturedCImage = [resizeFilter outputImage];
-        }else{
-          capturedCImage = [[CIImage alloc] initWithCGImage:[capturedImage CGImage]];
         }
 
         CIImage *imageToFilter;
         CIImage *finalCImage;
 
-        //fix front mirroring
+        // Mirror the front camera horizontally after orientation is normalized.
         if (self.sessionManager.defaultCamera == AVCaptureDevicePositionFront) {
-          CGAffineTransform matrix = CGAffineTransformTranslate(CGAffineTransformMakeScale(1, -1), 0, capturedCImage.extent.size.height);
+          CGAffineTransform matrix = CGAffineTransformMake(-1, 0, 0, 1, CGRectGetMinX(capturedCImage.extent) + CGRectGetMaxX(capturedCImage.extent), 0);
           imageToFilter = [capturedCImage imageByApplyingTransform:matrix];
         } else {
           imageToFilter = capturedCImage;
@@ -738,13 +697,7 @@
           finalCImage = imageToFilter;
         }
 
-        CGImageRef finalImage = [self.cameraRenderController.ciContext createCGImage:finalCImage fromRect:finalCImage.extent];
-        UIImage *resultImage = [UIImage imageWithCGImage:finalImage];
-
-        double radians = [self radiansFromUIImageOrientation:resultImage.imageOrientation];
-        CGImageRef resultFinalImage = [self CGImageRotated:finalImage withRadians:radians];
-
-        CGImageRelease(finalImage); // release CGImageRef to remove memory leaks
+        CGImageRef resultFinalImage = [self.cameraRenderController.ciContext createCGImage:finalCImage fromRect:finalCImage.extent];
 
         CDVPluginResult *pluginResult;
         if (self.storeToFile) {
